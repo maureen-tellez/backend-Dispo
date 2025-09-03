@@ -1,30 +1,27 @@
+# app.py
 from flask import Flask
-import os
-from dotenv import load_dotenv
+from config.db import init_db, mysql
 from routes.tareas import tareas_bp
 
+app = Flask(__name__)
 
-#cargar las variables de entorno
-load_dotenv()
+# Configurar e inicializar la base de datos
+init_db(app)
 
-def create_app():  #<- Funcion para crear la app
-    
-    #instancia de la app
-    app=Flask(__name__) 
+# Registrar blueprints
+app.register_blueprint(tareas_bp, url_prefix='/tareas')
 
-    #registrar el blueprint
+# Ruta de prueba para verificar conexión
+@app.route('/test-db')
+def test_db():
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT 1")
+        result = cursor.fetchone()
+        cursor.close()
+        return {"status": "success", "message": "Conexión a BD exitosa", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
 
-    app.register_blueprint(tareas_bp, url_prefix='/tareas')
-
-    return app
-
-#crear app
-app=create_app()
-
-if __name__ =="__main__":
-
-    #obtenemos el puerto
-    port = int(os.getenv("PORT",8080))
-
-    #corremos la app
-    app.run(host="0.0.0.0",port=port, debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080, debug=True)
