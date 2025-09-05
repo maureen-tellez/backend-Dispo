@@ -1,49 +1,34 @@
-# config/db.py
 from flask_mysqldb import MySQL
-import os
+import os  # cargar el sistema operativo
 from dotenv import load_dotenv
 
-# Cargar variables de entorno
+# cargar de .env las variables de entorno
 load_dotenv()
 
-# Crear instancia de MySQL
+# creo una instancia de MySQL
 mysql = MySQL()
 
-def init_db(app):
-    """Configura y inicializa MySQL para la aplicación Flask"""
-    # Obtener configuraciones desde variables de entorno
-    db_host = os.getenv('DB_HOST', 'localhost')
-    db_user = os.getenv('DB_USER', 'maureen')
-    db_password = os.getenv('DB_PASSWORD', 'Luna2024')
-    db_name = os.getenv('DB_NAME', 'appTareas')
-    db_port = int(os.getenv('DB_PORT', 3306))
-    
-    # Configurar la aplicación Flask
-    app.config['MYSQL_HOST'] = db_host
-    app.config['MYSQL_USER'] = db_user
-    app.config['MYSQL_PASSWORD'] = db_password
-    app.config['MYSQL_DB'] = db_name
-    app.config['MYSQL_PORT'] = db_port
-    app.config['MYSQL_CURSORCLASS'] = 'DictCursor'  # Para obtener resultados como diccionarios
-    app.config['MYSQL_CHARSET'] = 'utf8mb4'
-    
-    # Mensaje de debug (opcional)
-    print("✅ Configuración de Base de Datos cargada correctamente")
-    print(f"   Base de datos: {db_name}")
-    print(f"   Usuario: {db_user}")
-    print(f"   Host: {db_host}:{db_port}")
-    
-    # Inicializar MySQL con la aplicación
-    mysql.init_app(app)
-    
-    return mysql
+# funcion para conectarme a la BD
 
-def get_db():
-    """Obtener conexión a la base de datos (para uso en rutas)"""
+
+def init_db(app):
+    '''configuramos la base de datos con la instancia de flask'''
+    app.config['MYSQL_HOST'] = os.getenv('DB_HOST')
+    app.config['MYSQL_USER'] = os.getenv('DB_USER')
+    app.config['MYSQL_PASSWORD'] = os.getenv('DB_PASSWORD')
+    app.config['MYSQL_DB'] = os.getenv('DB_NAME')
+    app.config['MYSQL_PORT'] = int(os.getenv('DB_PORT'))
+
+    # inicializar la conexión
+    mysql.init_app(app)
+
+    # definimos el cursor
+
+
+def get_db_connection():
+    '''Devuelve un cursor para interactuar con la base de datos'''
     try:
-        # En Flask-MySQLdb, la conexión se obtiene así:
         connection = mysql.connection
-        return connection
+        return connection.cursor()
     except Exception as e:
-        print(f"❌ Error al obtener conexión: {e}")
         raise RuntimeError(f"Error al conectar a la base de datos: {e}")

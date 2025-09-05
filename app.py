@@ -2,6 +2,7 @@
 from flask import Flask
 from config.db import init_db, mysql
 from routes.tareas import tareas_bp
+from routes.usuarios import usuarios_bp
 
 app = Flask(__name__)
 
@@ -10,6 +11,7 @@ init_db(app)
 
 # Registrar blueprints
 app.register_blueprint(tareas_bp, url_prefix='/tareas')
+app.register_blueprint(usuarios_bp, url_prefix='/usuarios')
 
 # Ruta de prueba para verificar conexión
 @app.route('/test-db')
