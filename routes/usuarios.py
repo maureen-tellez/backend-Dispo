@@ -89,7 +89,6 @@ def login():
 @usuarios_bp.route('/datos', methods=['GET'])
 @jwt_required()
 def datos():
-
     current_user= get_jwt_identity()
 
     cursor = get_db_connection()

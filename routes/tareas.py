@@ -1,26 +1,34 @@
 # routes/tareas.py
 from flask import Blueprint, request, jsonify
-from config.db import mysql
+from flask_jwt_extended import jwt_required , get_jwt_identity
+from config.db import mysql,get_db_connection
 
 tareas_bp = Blueprint('tareas', __name__)
 
 @tareas_bp.route('/obtener', methods=['GET'])
-def get():
-    try:
-        cursor = mysql.connection.cursor()
-        cursor.execute("SELECT * FROM tareas")
-        tareas = cursor.fetchall()
-        cursor.close()
-        
-        return jsonify({
-            "mensaje": "Tareas obtenidas exitosamente",
-            "tareas": tareas
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@jwt_required()
+def obtener():
+
+    #Obtenemos la identidad del dueño del token
+    current_user=get_jwt_identity()
+    cursor = get_db_connection()
+    
+    query ='SELECT a.id_usuario, a.descripcion, b.nombre,b.email,a.creado_en FROM tareas  as a INNER JOIN usuarios as b WHERE a.id_usuario=%s'
+
+    cursor.execute(query,(current_user,))
+    lista= cursor.fetchall ()
+    cursor.close()
+
+    if not lista:
+        return jsonify({"error":"El usuario no tiene tareaaaas"}),404
+    
+    else:
+        return jsonify({"lista":lista}),200
 
 @tareas_bp.route('/crear', methods=['POST'])
+@jwt_required()
 def crear():
+    current_user= get_jwt_identity()
     try:
         data = request.get_json()
         descripcion = data.get('descripcion')
@@ -28,12 +36,12 @@ def crear():
         if not descripcion:
             return jsonify({"error": "Debes teclear una descripción"}), 400
         
-        cursor = mysql.connection.cursor()
+        cursor= get_db_connection()
         cursor.execute(
-            "INSERT INTO tareas (descripcion) VALUES (%s)",
-            (descripcion,)
+            "INSERT INTO tareas (descripcion,id_usuario) VALUES (%s,%s)",
+            (descripcion,current_user)
         )
-        mysql.connection.commit()
+        cursor.connection.commit()
         
         id_tarea = cursor.lastrowid
         cursor.close()
