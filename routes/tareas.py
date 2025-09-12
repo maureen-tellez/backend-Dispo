@@ -54,42 +54,47 @@ def crear():
     except Exception as e:
         return jsonify({"error": f"No se pudo crear la tarea: {str(e)}"}), 500
 
-@tareas_bp.route('/modificar/<int:id_tarea>', methods=['PUT'])
+#Crear endpoint usando PUT y pasando datos por el body y el url
+@tareas_bp.route('/modificar/<int:id_tarea>',methods=['PUT'])
 @jwt_required()
 def modificar(id_tarea):
-  
-        #OBtebemos la identidad del dueño dela tarea 
-        current_user= get_jwt_identity()
+    # Obtenemos la identidad del dueño de la tarea
+    current_user = get_jwt_identity()
 
-        data = request.get_json()
-        descripcion = data.get('descripcion')
-        cursor=get_db_connection()
-       #verificamos que existe la tarea
-        query='select * from tareas where id_tarea = %s'
-        cursor.execute(query,(id_tarea,))
-        tarea = cursor.fetchone()
-        if not tarea:
-            cursor.close()
-            return  jsonify({"error":"Esa tarea no existe"})
+    # Obtener losd atos del body
+    data=request.get_json()
+
+    descripcion = data.get('descripcion')
+
+    cursor = get_db_connection()
+    
+    #Verificamos si existe la tarea
+    query = "SELECT * FROM tareas where id_tarea = %s"
+    cursor.execute(query,({id_tarea,}))
+    tarea = cursor.fetchone()
+
+    #Verificamos que la tarea existe
+    if not tarea:
+        cursor.close()
+        return jsonify({"error":"Esa tarea no existe"}),404
+    
+    #Verifica si es del usuario logueado
+    if not tarea[1] == int(current_user):
+        cursor.close()
+        return jsonify({"error":"Credenciales incorrectas"}),401
+    
+    #Actualizar los datos
+    try:
+        cursor.execute("UPDATE tareas SET descripcion = %s WHERE id_tarea = %s", (descripcion,id_tarea))
+        cursor.connection.commit()
+        return jsonify({"mensaje":"Datos actualizados corretamente"}),200
+    except Exception as e:
+        return jsonify({"error":f"Error al actualizar los datos: {str(e)}"})
+    finally:
+        cursor.close()
+
+
         
-        if not tarea[1]== int (current_user):
-            cursor.close()
-        return jsonify({"error": "Credenciales Incorrectas"}),401
-    
-        try:
-             cursor.execute("update tareas set descripcion = %s where id_tarea=%s",(descripcion,id_tarea))
-             cursor.connection.commit()
-             return jsonify ({"mensaje": "Datos modificamos correctamentre "}),200
-        except Exception as e:
-            return jsonify({"error": f"ERROR al actualizar datos:, {str(e)}"})
-
-        finally:
-            cursor.close()
-
-
-        
-    
-    
 @tareas_bp.route('/eliminar/<int:tarea_id>', methods=['DELETE'])
 def eliminar(tarea_id):
     try:
