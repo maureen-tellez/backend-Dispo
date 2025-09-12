@@ -107,5 +107,6 @@ def datos():
         return jsonify({"datos":user_info}),200
 
     else:
-        return jsonify({"error:Usuario no encontrado"}),400
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
 
